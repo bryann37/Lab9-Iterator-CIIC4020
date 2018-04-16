@@ -7,8 +7,8 @@ import interfaces.Position;
 
 public class ForwardArrayIterator<E> implements Iterator<E> {
 	
-	private Position<E> cursor = first();
-	private Position<E> recent = null;
+	private E cursor = first();
+	private E recent = null;
 
 	private E[] arr;    // the array to iterate over
 	// other internal fields...
@@ -21,7 +21,7 @@ public class ForwardArrayIterator<E> implements Iterator<E> {
 	public boolean hasNext() {
 		// rewrite...
 		
-		return true;   
+		return cursor!=null;   
 	}
 
 	public E next() throws NoSuchElementException {
@@ -29,9 +29,12 @@ public class ForwardArrayIterator<E> implements Iterator<E> {
 			throw new 
 				NoSuchElementException("No more elements to iterate over."); 
 		// rewrite
+		recent = cursor;
+		cursor = after(cursor);
+		return recent;
 		
-		return null;
 	}
+
 
 	public void remove() throws UnsupportedOperationException {
 		throw new UnsupportedOperationException(
