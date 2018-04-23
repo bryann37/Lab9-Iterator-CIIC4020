@@ -7,21 +7,22 @@ import interfaces.Position;
 
 public class ForwardArrayIterator<E> implements Iterator<E> {
 	
-	private E cursor = first();
-	private E recent = null;
+	
+	private int current;
 
 	private E[] arr;    // the array to iterate over
 	// other internal fields...
 	
 	public ForwardArrayIterator(E[] arr) { 
 		this.arr = arr; 
+		current = 0;
 		// initialize other internal fields as needed
 	}
 	
 	public boolean hasNext() {
 		// rewrite...
 		
-		return cursor!=null;   
+		return current < arr.length;   
 	}
 
 	public E next() throws NoSuchElementException {
@@ -29,9 +30,8 @@ public class ForwardArrayIterator<E> implements Iterator<E> {
 			throw new 
 				NoSuchElementException("No more elements to iterate over."); 
 		// rewrite
-		recent = cursor;
-		cursor = after(cursor);
-		return recent;
+		current++;
+		return arr[current - 1];
 		
 	}
 

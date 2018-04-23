@@ -8,9 +8,9 @@ import interfaces.PLIteratorMaker;
 import interfaces.Position;
 import interfaces.PositionalList;
 
-public class LinkedPositionalList<E> implements PositionalList<E> {
+public class LinkedPositionalList2<E> implements PositionalList<E> {
 
-	private static class DNode<E> implements Position<E> { 
+	public static class DNode<E> implements Position<E> { 
 		private E element; 
 		private DNode<E> prev, next;
 		public E getElement() {
@@ -54,12 +54,17 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
 	private Iterator<Position<E>> posIterator; 
 	
 	
-	public LinkedPositionalList() {
+	public LinkedPositionalList2() {
 		header = new DNode<>(); 
 		trailer = new DNode<>(); 
 		header.setNext(trailer);
 		trailer.setPrev(header); 
 		size = 0; 
+	}
+	
+	public LinkedPositionalList2(PLIteratorMaker<E> iM) {
+		this();
+		this.iteratorMaker = iM;
 	}
 
 	private DNode<E> validate(Position<E> p) throws IllegalArgumentException { 
@@ -68,6 +73,8 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
 			if (dp.getPrev() == null || dp.getNext() == null) 
 				throw new IllegalArgumentException("Invalid internal node."); 
 			
+			if(!isInList(p))
+				throw new IllegalArgumentException("Position in wrong list.");
 			return dp; 
 		} catch (ClassCastException e) { 
 			throw new IllegalArgumentException("Invalid position type."); 
@@ -80,14 +87,14 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
 		return dn; 
 	}
 	
-	private boolean isNList(Position<E> p) {
+	//use to prevent validation of position in wrong list
+	private boolean isInList(Position<E> p) {
 		for(Position<E> n : positions()) {
 			if(n == p)
 				return true;
 		}
 		return false;
-		}
-	
+	}
 	
 	private DNode<E> addBetween(DNode<E> b, DNode<E> a, E e) { 
 		DNode<E> n = new DNode<>(e, b, a); 
@@ -181,12 +188,16 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
 	public Iterator<E> iterator() {
 		return new ElementIterator();
 	}
+	
+	public Iterator<Position<E>> iterator2(){
+		return iteratorMaker.makeIterator(this);
+	}
 
 	
 	// Implementation of Iterator and Iterable...
 	private class PositionIterator implements Iterator<Position<E>> {
-		private DNode<E> cursor = header.getNext(), 
-			    recent = null; 
+		private DNode<E> cursor = header.getNext(), recent = null; 
+		
 		@Override
 		public boolean hasNext() {
 			return cursor != trailer;
@@ -215,9 +226,13 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
 		
 	}
 	
-	private class ElementIterator implements Iterator<E> { 
+	public class ElementIterator implements Iterator<E> { 
 		Iterator<Position<E>> posIterator = 
 				new PositionIterator(); 
+		public ElementIterator() {
+			
+		}
+
 		@Override
 		public boolean hasNext() {
 			return posIterator.hasNext();
@@ -243,37 +258,69 @@ public class LinkedPositionalList<E> implements PositionalList<E> {
 		} 
 		
 	}
+
 	public class BackwardElementIterator implements Iterator<E>{
-		 		private DNode<E> cursor = trailer.getPrev(), recent = null;
-		 		
-		 		public BackwardElementIterator() {}
-		 		
-		 		@Override
-		 		public boolean hasNext() {
-		 			return cursor != header;
-		 		}
-		 
-		 		@Override
-		 		public E next() throws NoSuchElementException {
-		 			if (!hasNext())
-		 				throw new NoSuchElementException("No more elements."); 
-		 			recent = cursor; 
-		 			cursor = cursor.getPrev(); 
-		 			E etr = recent.getElement();
-		 			return etr;
-		 		} 
-				
-		 		public void remove() throws IllegalStateException { 
-		 			if (recent == null) 
-		 				throw new IllegalStateException("remove() not valid at this state of the iterator."); 
-		 			DNode<E> b = recent.getPrev(); 
-		 			DNode<E> a = recent.getNext(); 
-		 			b.setNext(a);
-		 			a.setPrev(b);
-		 			recent.clean();
-		 			recent = null; 
-		 			size--;
-		 		}
-		 	}
+		private DNode<E> cursor = trailer.getPrev(), recent = null;
+		
+		public BackwardElementIterator() {}
+		
+		@Override
+		public boolean hasNext() {
+			return cursor != header;
+		}
+
+		@Override
+		public E next() throws NoSuchElementException {
+			if (!hasNext())
+				throw new NoSuchElementException("No more elements."); 
+			recent = cursor; 
+			cursor = cursor.getPrev(); 
+			E etr = recent.getElement();
+			return etr;
+		} 
+		
+		public void remove() throws IllegalStateException { 
+			if (recent == null) 
+				throw new IllegalStateException("remove() not valid at this state of the iterator."); 
+			DNode<E> b = recent.getPrev(); 
+			DNode<E> a = recent.getNext(); 
+			b.setNext(a);
+			a.setPrev(b);
+			recent.clean();
+			recent = null; 
+			size--;
+		}
+	}
+
+	private class ElementIteratorMaker<E> implements PLIteratorMaker<E>{
+
+		public LinkedPositionalList2<E>.ElementIterator makeIterator() {
+			
+			return (LinkedPositionalList2<E>.ElementIterator) new ElementIterator();
+		}
+
+		@Override//not needed, position iterator already implemented
+		public Iterator<Position<E>> makeIterator(PositionalList<E> pl) {
+			// TODO Auto-generated method stub
+			return (Iterator<Position<E>>) ((LinkedPositionalList2<E>)pl).new ElementIterator();
+		}
+		
+	}
 	
+	private class BackwardElementIteratorMaker<E> implements PLIteratorMaker<E>{
+
+		public LinkedPositionalList2<E>.BackwardElementIterator makeIterator() {
+			
+			return (LinkedPositionalList2<E>.BackwardElementIterator) new BackwardElementIterator();
+		}
+
+		@Override
+		public Iterator<Position<E>> makeIterator(PositionalList<E> pl) {
+			// TODO Auto-generated method stub
+			return (Iterator<Position<E>>) ((LinkedPositionalList2<E>)pl).new BackwardElementIterator();
+		}
+		
+	}
+	
+
 }
